@@ -8,3 +8,8 @@ Accept: application/json
 GET {{GuideOne.Api_HostAddress}}/health
 
 ###
+
+GET {{GuideOne.Api_HostAddress}}/api/todos
+Accept: application/json
+
+###

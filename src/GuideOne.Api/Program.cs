@@ -1,4 +1,5 @@
 using Scalar.AspNetCore;
+using Supabase.Extensions.DependencyInjection;
 
 const string FrontendCorsPolicy = "Frontend";
 
@@ -8,6 +9,11 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
+
+builder.Services.AddSupabase(
+    builder.Configuration["Supabase:Url"]!,
+    builder.Configuration["Supabase:Key"]!
+);
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
