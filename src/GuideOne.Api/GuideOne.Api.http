@@ -1,0 +1,10 @@
+@GuideOne.Api_HostAddress = http://localhost:5025
+
+GET {{GuideOne.Api_HostAddress}}/api/ping
+Accept: application/json
+
+###
+
+GET {{GuideOne.Api_HostAddress}}/health
+
+###
