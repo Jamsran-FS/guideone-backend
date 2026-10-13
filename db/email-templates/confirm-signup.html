@@ -1,0 +1,26 @@
+<!--
+  Supabase Dashboard → Authentication → Emails → Templates → "Confirm signup"
+  Subject: GuideOne — И-мэйл хаягаа баталгаажуулна уу
+  Доорх HTML-ийг "Message body" хэсэгт хуулна.
+-->
+<div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; color: #0d1f17;">
+  <h1 style="font-size: 22px; color: #0a4a30; margin: 0 0 16px;">GuideOne-д тавтай морил!</h1>
+  <p style="font-size: 15px; line-height: 1.6; margin: 0 0 24px;">
+    Бүртгэлээ идэвхжүүлэхийн тулд доорх товч дээр дарж и-мэйл хаягаа баталгаажуулна уу.
+    Баталгаажуулсны дараа хэлний бэлтгэл болон Солонгос сургуульд суралцах өргөдлөө онлайнаар илгээх боломжтой.
+  </p>
+  <p style="margin: 0 0 24px;">
+    <a href="{{ .ConfirmationURL }}"
+       style="display: inline-block; background: #0e8444; color: #ffffff; text-decoration: none; font-weight: bold; padding: 12px 28px; border-radius: 999px;">
+      И-мэйл баталгаажуулах
+    </a>
+  </p>
+  <p style="font-size: 13px; line-height: 1.6; color: #56675e; margin: 0;">
+    Хэрэв та GuideOne-д бүртгүүлээгүй бол энэ и-мэйлийг үл тоомсорлоно уу.<br />
+    Холбоос ажиллахгүй бол хуулж хөтөч дээрээ нээнэ үү: {{ .ConfirmationURL }}
+  </p>
+  <hr style="border: none; border-top: 1px solid #e0e8e3; margin: 28px 0 16px;" />
+  <p style="font-size: 12px; color: #56675e; margin: 0;">
+    GuideOne · Улаанбаатар, Сүхбаатар дүүрэг, GD Plaza, 7 давхар, 701 тоот · +976 8606-3323
+  </p>
+</div>
