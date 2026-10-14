@@ -26,7 +26,6 @@ builder.Services.Configure<SupabaseOptions>(builder.Configuration.GetSection("Su
 builder.Services.AddHttpClient<SupabaseRest>(http =>
 {
     http.BaseAddress = new Uri(supabase.Url.TrimEnd('/') + "/");
-    http.DefaultRequestHeaders.Add("apikey", supabase.Key);
 });
 
 // Supabase Auth-ийн JWT-г (ES256, JWKS) шалгана. Нэвтрэх/бүртгүүлэх нь Supabase дээр явагдана.

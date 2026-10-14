@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Microsoft.Extensions.Options;
 
 namespace GuideOne.Api.Infrastructure;
 
@@ -10,8 +11,26 @@ namespace GuideOne.Api.Infrastructure;
 /// Хэрэглэгчийн access token дамжуулбал Row Level Security тухайн хэрэглэгчийн эрхээр ажиллана;
 /// token-гүй бол publishable key-ээр (anon) хандана.
 /// </summary>
-public sealed class SupabaseRest(HttpClient http)
+public sealed class SupabaseRest(HttpClient http, IOptions<SupabaseOptions> options)
 {
+    /// <summary>Secret key тохируулсан эсэх (админ хэрэглэгч үүсгэх боломж).</summary>
+    public bool HasSecretKey => !string.IsNullOrWhiteSpace(options.Value.SecretKey);
+
+    /// <summary>
+    /// Auth admin API-аар и-мэйл нь баталгаажсан хэрэглэгч үүсгэнэ (secret key шаардлагатай).
+    /// Буцаах: шинэ хэрэглэгчийн id.
+    /// </summary>
+    public async Task<string> CreateConfirmedUserAsync(JsonObject body, CancellationToken ct = default)
+    {
+        var secret = options.Value.SecretKey ?? throw new InvalidOperationException("Supabase:SecretKey is not configured.");
+        using var request = new HttpRequestMessage(HttpMethod.Post, "auth/v1/admin/users")
+        {
+            Content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json"),
+        };
+        var user = await SendAsync(request, secret, null, ct, apiKey: secret);
+        return user!["id"]!.GetValue<string>();
+    }
+
     public Task<JsonNode?> GetAsync(string path, string? token = null, CancellationToken ct = default) =>
         SendAsync(HttpMethod.Get, path, null, token, null, ct);
 
@@ -63,8 +82,10 @@ public sealed class SupabaseRest(HttpClient http)
     public Task<JsonNode?> DeleteFileAsync(string bucket, string path, string token, CancellationToken ct = default) =>
         SendAsync(HttpMethod.Delete, $"storage/v1/object/{bucket}", new JsonObject { ["prefixes"] = new JsonArray(path) }, token, null, ct);
 
-    private async Task<JsonNode?> SendAsync(HttpRequestMessage request, string? token, string? prefer, CancellationToken ct)
+    private async Task<JsonNode?> SendAsync(HttpRequestMessage request, string? token, string? prefer, CancellationToken ct,
+        string? apiKey = null)
     {
+        request.Headers.Add("apikey", apiKey ?? options.Value.Key);
         if (token is not null) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         if (prefer is not null) request.Headers.Add("Prefer", prefer);
 
