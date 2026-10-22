@@ -19,7 +19,7 @@ public static class ContentResources
         ["partners"] = new("partners",
             ["name", "city", "type", "logo_url", "url", "sort_order", "is_published"]),
         ["teachers"] = new("teachers",
-            ["name", "image_url", "position", "specialty", "experience", "description", "sort_order", "is_published"]),
+            ["name", "image_url", "position", "specialty", "experience", "description", "education", "sort_order", "is_published"]),
         ["testimonials"] = new("testimonials",
             ["name", "context", "quote", "image_url", "sort_order", "is_published"]),
         ["faqs"] = new("faqs",
