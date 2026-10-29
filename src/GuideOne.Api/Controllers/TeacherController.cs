@@ -58,8 +58,11 @@ public partial class TeacherController(SupabaseRest supabase) : ApiControllerBas
     [RequestSizeLimit(MaterialFiles.MaxBytes + 256 * 1024)]
     public async Task<ActionResult<JsonNode>> AddMaterial(long id, [FromForm] MaterialForm form, CancellationToken ct)
     {
-        if (form.File is null && string.IsNullOrWhiteSpace(form.LinkUrl))
+        if (form.File is null && string.IsNullOrWhiteSpace(form.FilePath) && string.IsNullOrWhiteSpace(form.LinkUrl))
             return Problem(statusCode: 400, detail: "Attach a file or provide a link.");
+        // Хөтчөөс шууд upload хийсэн файл (UploadUrl) — зөвхөн энэ ангийн хавтас
+        if (!string.IsNullOrWhiteSpace(form.FilePath) && !(form.FilePath.StartsWith($"{id}/") && UploadedFile().IsMatch(form.FilePath[$"{id}/".Length..])))
+            return Problem(statusCode: 400, detail: "Invalid file path.");
         if (form.File is { Length: 0 or > MaterialFiles.MaxBytes })
             return Problem(statusCode: 400, detail: "The file must be 20 MB or smaller.");
 
@@ -83,8 +86,28 @@ public partial class TeacherController(SupabaseRest supabase) : ApiControllerBas
             row["file_path"] = path;
             row["file_name"] = Path.GetFileName(file.FileName) is { Length: > 200 } name ? name[..200] : Path.GetFileName(file.FileName);
         }
+        else if (!string.IsNullOrWhiteSpace(form.FilePath))
+        {
+            row["file_path"] = form.FilePath;
+            row["file_name"] = Path.GetFileName(form.FileName ?? form.FilePath) is { Length: > 200 } name ? name[..200] : Path.GetFileName(form.FileName ?? form.FilePath);
+        }
 
         return Ok(await supabase.InsertAsync("materials", row, token, ct));
+    }
+
+    /// <summary>
+    /// Хөтчөөс Supabase Storage руу шууд upload хийх түр холбоос (Vercel-ийн 4.5MB хязгаарыг тойрно).
+    /// Хэмжээ (20MB), төрлийг bucket өөрөө шалгана; эрхийг storage policy (teaches_group) шалгана.
+    /// </summary>
+    [HttpPost("groups/{id:long}/materials/upload-url")]
+    public async Task<ActionResult<UploadUrlResponse>> UploadUrl(long id, UploadUrlRequest request, CancellationToken ct)
+    {
+        var extension = SafeExtension().Match(Path.GetExtension(request.FileName).ToLowerInvariant()).Value;
+        var path = $"{id}/{Guid.NewGuid():N}{extension}";
+        var result = await supabase.SendAsync(HttpMethod.Post, $"storage/v1/object/upload/sign/{MaterialFiles.Bucket}/{path}",
+            new JsonObject(), await AccessTokenAsync(), ct: ct);
+        var url = result.Text("url") ?? throw new SupabaseException(502, "Supabase did not return an upload URL.", null);
+        return Ok(new UploadUrlResponse($"{supabase.BaseUrl}storage/v1{url}", path));
     }
 
     [HttpDelete("materials/{id:long}")]
@@ -171,6 +194,10 @@ public partial class TeacherController(SupabaseRest supabase) : ApiControllerBas
 
     [GeneratedRegex(@"^\.[a-z0-9]{1,8}$")]
     private static partial Regex SafeExtension();
+
+    /// <summary>UploadUrl-ийн үүсгэсэн файлын нэр: {guid}{.ext}</summary>
+    [GeneratedRegex(@"^[0-9a-f]{32}(\.[a-z0-9]{1,8})?$")]
+    private static partial Regex UploadedFile();
 }
 
 public class MaterialForm
@@ -180,7 +207,16 @@ public class MaterialForm
     [Required, RegularExpression("^(handbook|lecture|seminar|other)$")] public string Kind { get; set; } = "lecture";
     [Url, MaxLength(1000)] public string? LinkUrl { get; set; }
     public IFormFile? File { get; set; }
+    /// <summary>UploadUrl-аар хөтчөөс upload хийсэн файлын зам</summary>
+    [MaxLength(200)] public string? FilePath { get; set; }
+    [MaxLength(255)] public string? FileName { get; set; }
 }
+
+public record UploadUrlRequest([Required, MaxLength(255)] string FileName);
+
+/// <param name="Url">PUT хүсэлтээр файлыг шууд илгээх Supabase холбоос (2 цаг хүчинтэй)</param>
+/// <param name="Path">AddMaterial-д FilePath болгон дамжуулна</param>
+public record UploadUrlResponse(string Url, string Path);
 
 public record AnnouncementRequest([Required, MaxLength(200)] string Title, [MaxLength(8000)] string? Body);
 

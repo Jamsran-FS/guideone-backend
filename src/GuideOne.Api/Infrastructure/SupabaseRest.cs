@@ -16,6 +16,9 @@ public sealed class SupabaseRest(HttpClient http, IOptions<SupabaseOptions> opti
     /// <summary>Secret key тохируулсан эсэх (админ хэрэглэгч үүсгэх боломж).</summary>
     public bool HasSecretKey => !string.IsNullOrWhiteSpace(options.Value.SecretKey);
 
+    /// <summary>Supabase төслийн үндсэн хаяг ("/"-ээр төгссөн).</summary>
+    public Uri? BaseUrl => http.BaseAddress;
+
     /// <summary>
     /// Auth admin API-аар и-мэйл нь баталгаажсан хэрэглэгч үүсгэнэ (secret key шаардлагатай).
     /// Буцаах: шинэ хэрэглэгчийн id.
