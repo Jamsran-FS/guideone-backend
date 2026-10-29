@@ -142,7 +142,18 @@ public class AdminController(SupabaseRest supabase, ProfileRoles roles) : ApiCon
         roles.Forget(id.ToString());
         return row is null ? NotFound() : Ok(row);
     }
+
+    /// <summary>Хэрэглэгчийн нууц үгийг солино (db/10_admin_set_password.sql).</summary>
+    [HttpPut("users/{id:guid}/password")]
+    public async Task<IActionResult> SetPassword(Guid id, SetPasswordRequest request, CancellationToken ct)
+    {
+        await supabase.SendAsync(HttpMethod.Post, "rest/v1/rpc/admin_set_password",
+            new JsonObject { ["target"] = id.ToString(), ["new_password"] = request.Password }, await AccessTokenAsync(), ct: ct);
+        return NoContent();
+    }
 }
+
+public record SetPasswordRequest([Required, MinLength(8), MaxLength(72)] string Password);
 
 public record CreateUserRequest(
     [Required, EmailAddress, MaxLength(254)] string Email,
