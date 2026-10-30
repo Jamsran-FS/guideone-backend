@@ -29,7 +29,7 @@ public partial class AdminContentController(SupabaseRest supabase, IOptions<Supa
     public async Task<ActionResult<JsonNode>> List(string resource, CancellationToken ct)
     {
         if (!ContentResources.All.TryGetValue(resource, out var r)) return NotFound();
-        return Ok(await supabase.GetAsync($"rest/v1/{r.Table}?order={ContentResource.Order}", await AccessTokenAsync(), ct));
+        return Ok(await supabase.GetAsync($"rest/v1/{r.Table}?order={r.Order}", await AccessTokenAsync(), ct));
     }
 
     [HttpPost("content/{resource}")]

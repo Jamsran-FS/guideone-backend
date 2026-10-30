@@ -3,9 +3,12 @@ namespace GuideOne.Api.Infrastructure;
 /// <summary>Админаас засах боломжтой сайтын контентын хүснэгт.</summary>
 /// <param name="Table">Supabase дахь хүснэгтийн нэр.</param>
 /// <param name="Columns">Админ бичиж болох баганууд (id, created_at зэргийг DB өөрөө бөглөнө).</param>
-public sealed record ContentResource(string Table, string[] Columns)
+/// <param name="Order">Эрэмбэ (PostgREST order).</param>
+/// <param name="PublicFilter">Сайтад (/api/content) харуулах нэмэлт шүүлтүүр — админд бүх мөр харагдана.</param>
+public sealed record ContentResource(string Table, string[] Columns, string Order = ContentResource.DefaultOrder,
+    Func<string>? PublicFilter = null)
 {
-    public const string Order = "sort_order.asc,id.asc";
+    public const string DefaultOrder = "sort_order.asc,id.asc";
 }
 
 public static class ContentResources
@@ -28,5 +31,10 @@ public static class ContentResources
             ["name", "context", "quote", "image_url", "sort_order", "is_published"]),
         ["faqs"] = new("faqs",
             ["question", "answer", "sort_order", "is_published"]),
+        // Гүйдэг зар: хугацаа нь дуусаагүйг л сайт руу илгээнэ (эхлэх хугацааг frontend шалгана)
+        ["notices"] = new("notices",
+            ["text", "url", "starts_at", "ends_at", "sort_order", "is_published"],
+            Order: "starts_at.desc,id.desc",
+            PublicFilter: () => $"ends_at=gt.{Uri.EscapeDataString(DateTimeOffset.UtcNow.ToString("O"))}"),
     };
 }

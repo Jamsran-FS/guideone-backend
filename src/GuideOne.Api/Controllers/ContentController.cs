@@ -19,7 +19,7 @@ public class ContentController(SupabaseRest supabase) : ApiControllerBase
         var sections = supabase.GetAsync("rest/v1/site_content?select=key,value", ct: ct);
         var lists = ContentResources.All.ToDictionary(
             r => r.Key,
-            r => supabase.GetAsync($"rest/v1/{r.Value.Table}?is_published=eq.true&order={ContentResource.Order}", ct: ct));
+            r => ListAsync(r.Value, ct));
         await Task.WhenAll([sections, .. lists.Values]);
 
         var sectionMap = new JsonObject();
@@ -27,8 +27,19 @@ public class ContentController(SupabaseRest supabase) : ApiControllerBase
             sectionMap[row!["key"]!.GetValue<string>()] = row["value"]?.DeepClone();
 
         var result = new JsonObject { ["sections"] = sectionMap };
-        foreach (var (name, rows) in lists) result[name] = await rows;
+        foreach (var (name, rows) in lists)
+            if (await rows is { } list) result[name] = list;
         return result;
+    }
+
+    /// <summary>
+    /// Нийтлэгдсэн мөрүүд. Migration хараахан ажиллаагүй (хүснэгт байхгүй) бол null — бусад контент хэвийн ирнэ.
+    /// </summary>
+    private async Task<JsonNode?> ListAsync(ContentResource r, CancellationToken ct)
+    {
+        var query = $"rest/v1/{r.Table}?is_published=eq.true&order={r.Order}" + (r.PublicFilter is { } filter ? $"&{filter()}" : "");
+        try { return await supabase.GetAsync(query, ct: ct); }
+        catch (SupabaseException e) when (e.Code is "PGRST205" or "42P01") { return null; }
     }
 
     /// <summary>Холбоо барих формын хүсэлтийг хадгална — админ "Хүсэлтүүд" хэсэгт харна.</summary>
