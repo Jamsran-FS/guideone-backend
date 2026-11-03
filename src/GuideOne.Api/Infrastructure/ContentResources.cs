@@ -31,7 +31,7 @@ public static class ContentResources
             ["name", "context", "quote", "image_url", "sort_order", "is_published"]),
         ["faqs"] = new("faqs",
             ["question", "answer", "sort_order", "is_published"]),
-        // Гүйдэг зар: хугацаа нь дуусаагүйг л сайт руу илгээнэ (эхлэх хугацааг frontend шалгана)
+        // Урсдаг зар: хугацаа нь дуусаагүйг л сайт руу илгээнэ (эхлэх хугацааг frontend шалгана)
         ["notices"] = new("notices",
             ["text", "url", "starts_at", "ends_at", "sort_order", "is_published"],
             Order: "starts_at.desc,id.desc",
