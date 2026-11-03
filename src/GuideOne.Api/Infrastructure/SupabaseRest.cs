@@ -34,6 +34,19 @@ public sealed class SupabaseRest(HttpClient http, IOptions<SupabaseOptions> opti
         return user!["id"]!.GetValue<string>();
     }
 
+    /// <summary>
+    /// Secret key-ээр (service_role, RLS-ийг алгасна) хандана — хэрэглэгчийн token-гүй callback зэрэгт.
+    /// Зөвхөн backend өөрөө шалгасан өгөгдлийг бичихэд ашиглана.
+    /// </summary>
+    public async Task<JsonNode?> ServiceAsync(HttpMethod method, string path, JsonNode? body = null, string? prefer = null,
+        CancellationToken ct = default)
+    {
+        var secret = options.Value.SecretKey ?? throw new InvalidOperationException("Supabase:SecretKey is not configured.");
+        using var request = new HttpRequestMessage(method, path);
+        if (body is not null) request.Content = new StringContent(body.ToJsonString(), Encoding.UTF8, "application/json");
+        return await SendAsync(request, secret, prefer, ct, apiKey: secret);
+    }
+
     public Task<JsonNode?> GetAsync(string path, string? token = null, CancellationToken ct = default) =>
         SendAsync(HttpMethod.Get, path, null, token, null, ct);
 

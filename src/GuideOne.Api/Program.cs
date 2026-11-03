@@ -28,6 +28,14 @@ builder.Services.AddHttpClient<SupabaseRest>(http =>
     http.BaseAddress = new Uri(supabase.Url.TrimEnd('/') + "/");
 });
 
+builder.Services.Configure<QPayOptions>(builder.Configuration.GetSection("QPay"));
+builder.Services.AddHttpClient<QPayClient>((services, http) =>
+{
+    var qpay = services.GetRequiredService<Microsoft.Extensions.Options.IOptions<QPayOptions>>().Value;
+    http.BaseAddress = new Uri(qpay.BaseUrl.TrimEnd('/') + "/");
+    http.Timeout = TimeSpan.FromSeconds(30);
+});
+
 // Supabase Auth-ийн JWT-г (ES256, JWKS) шалгана. Нэвтрэх/бүртгүүлэх нь Supabase дээр явагдана.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
