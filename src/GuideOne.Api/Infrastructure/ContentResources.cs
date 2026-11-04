@@ -31,6 +31,10 @@ public static class ContentResources
             ["name", "context", "quote", "image_url", "sort_order", "is_published"]),
         ["faqs"] = new("faqs",
             ["question", "answer", "sort_order", "is_published"]),
+        // Зургийн цомог: шинэ зураг эхэнд
+        ["gallery"] = new("gallery",
+            ["image_url", "caption", "width", "height", "sort_order", "is_published"],
+            Order: "sort_order.asc,id.desc"),
         // Урсдаг зар: хугацаа нь дуусаагүйг л сайт руу илгээнэ (эхлэх хугацааг frontend шалгана)
         ["notices"] = new("notices",
             ["text", "url", "starts_at", "ends_at", "sort_order", "is_published"],
